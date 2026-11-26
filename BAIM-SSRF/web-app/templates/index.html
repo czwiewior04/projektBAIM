@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <!-- UTF-8 obsługuje polskie etykiety, a viewport dopasowuje UI do ekranów mobilnych. -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SSRF Demonstration</title>
+  <!-- Flask generuje URL do arkusza, więc ścieżka pozostaje poprawna przy zmianie routingu. -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="container">
+    <!-- Nagłówek wyjaśnia edukacyjny charakter aplikacji i rolę backendu. -->
+    <header>
+      <p class="eyebrow">LABORATORIUM BEZPIECZEŃSTWA APLIKACJI</p>
+      <h1>SSRF Demonstration</h1>
+      <p class="muted">Podgląd URL wykonywany przez backend aplikacji.</p>
+    </header>
+
+    <!-- Główne sterowanie: tryb polityki, adres docelowy i przykładowe cele. -->
+    <section class="panel">
+      <label for="mode">Tryb aplikacji</label>
+      <select id="mode">
+        <option value="vulnerable">Vulnerable Mode — brak walidacji celu</option>
+        <option value="protected">Protected Mode — allowlista</option>
+      </select>
+
+      <label for="url">Adres URL</label>
+      <input id="url" type="url" value="https://example.com" placeholder="https://example.com">
+
+      <div class="presets">
+        <button class="secondary" type="button" data-url="https://example.com">Publiczna strona</button>
+        <button class="secondary" type="button" data-url="http://internal-api:5001/admin">Wewnętrzny panel (demo)</button>
+      </div>
+      <button id="fetch">Fetch URL</button>
+      <p class="hint">Wewnętrzny adres działa tylko z perspektywy kontenera web-app. Nie jest wystawiony na port hosta.</p>
+    </section>
+
+    <!-- Odpowiedź backendu trafia do osobnego panelu statusu i treści. -->
+    <section class="panel">
+      <div class="result-heading">
+        <h2>Wynik żądania</h2>
+        <span id="status" class="status neutral">Oczekiwanie</span>
+      </div>
+      <pre id="output">Wybierz adres i kliknij „Fetch URL”.</pre>
+    </section>
+
+    <!-- Krótkie przypomnienie, co pokazują dwa tryby demonstracji. -->
+    <section class="note">
+      <strong>Co demonstruje ten lab?</strong>
+      <p>Backend pobiera URL podany przez użytkownika. W Vulnerable Mode można wskazać wewnętrzny serwis dostępny z sieci kontenerów. Protected Mode dopuszcza wyłącznie HTTPS do example.com.</p>
+    </section>
+    <footer>Środowisko edukacyjne • wyłącznie fikcyjne dane i lokalne usługi</footer>
+  </main>
+
+<script>
+// Pobieramy elementy raz przy starcie, aby późniejsze handlery mogły aktualizować UI.
+const urlInput = document.getElementById("url");
+const modeInput = document.getElementById("mode");
+const output = document.getElementById("output");
+const status = document.getElementById("status");
+const fetchButton = document.getElementById("fetch");
+
+// Przyciski presetów tylko uzupełniają pole; właściwe żądanie wykonuje przycisk poniżej.
+document.querySelectorAll("[data-url]").forEach(button => {
+  button.addEventListener("click", () => {
+    urlInput.value = button.dataset.url;
+  });
+});
+
+fetchButton.addEventListener("click", async () => {
+  // Blokujemy ponowne kliknięcie podczas trwania żądania i pokazujemy stan oczekiwania.
+  fetchButton.disabled = true;
+  status.textContent = "Wykonywanie...";
+  status.className = "status neutral";
+  output.textContent = "Backend wykonuje żądanie HTTP...";
+
+  try {
+    // URL i tryb przesyłamy jako JSON do backendowego endpointu /fetch.
+    const response = await fetch("/fetch", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({url: urlInput.value, mode: modeInput.value})
+    });
+    const data = await response.json();
+
+    if (data.ok) {
+      // Poprawna odpowiedź: pokazujemy status HTTP i treść pobraną przez backend.
+      status.textContent = `HTTP ${data.status_code}`;
+      status.className = "status success";
+      output.textContent =
+        `Tryb: ${data.mode}\nURL: ${data.final_url}\n\n${data.body}` +
+        (data.truncated ? "\n\n[Odpowiedź skrócona]" : "");
+    } else {
+      // Odmowa Protected Mode ma inny, pozytywnie oznaczony stan niż błąd transportu.
+      status.textContent = data.blocked ? "Zablokowano" : `Błąd ${response.status}`;
+      status.className = `status ${data.blocked ? "success" : "error"}`;
+      output.textContent = data.error || "Nieznany błąd.";
+    }
+  } catch (error) {
+    // Tu trafiają błędy samego połączenia UI z backendem lub niepoprawna odpowiedź.
+    status.textContent = "Błąd połączenia";
+    status.className = "status error";
+    output.textContent = String(error);
+  } finally {
+    // Niezależnie od wyniku przywracamy możliwość wysłania kolejnego żądania.
+    fetchButton.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

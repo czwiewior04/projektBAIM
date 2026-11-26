@@ -1,0 +1,50 @@
+/* Globalny reset rozmiarów ułatwia przewidywalne liczenie paddingu i obramowań. */
+* { box-sizing: border-box; }
+
+/* Ciemne tło i systemowy krój pisma tworzą wspólną bazę całego laboratorium. */
+body { margin: 0; background: #101827; color: #e5eaf2; font: 16px/1.5 system-ui, sans-serif; }
+
+/* Główna kolumna ma stały maksymalny rozmiar i marginesy dopasowane do ekranu. */
+.container { width: min(850px, calc(100% - 32px)); margin: 48px auto; }
+
+/* Nagłówek i tytuły porządkują hierarchię treści. */
+header { margin-bottom: 26px; }
+h1 { margin: 4px 0; font-size: clamp(2rem, 5vw, 3rem); }
+h2 { margin: 0; font-size: 1.1rem; }
+.eyebrow { color: #7dd3fc; font-size: .75rem; letter-spacing: .14em; font-weight: 700; }
+
+/* Teksty pomocnicze są mniej kontrastowe od treści interaktywnej. */
+.muted, .hint, footer { color: #9aa8bb; }
+
+/* Panelowe tło i obramowanie grupują formularz oraz wynik żądania. */
+.panel, .note { background: #1b283b; border: 1px solid #33445d; border-radius: 14px; padding: 22px; margin: 18px 0; }
+
+/* Etykiety pozostają nad kontrolkami, żeby pola były łatwe do rozpoznania. */
+label { display: block; margin: 12px 0 6px; font-weight: 650; }
+
+/* Pola formularza współdzielą rozmiary i paletę z resztą aplikacji. */
+input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #52647e; background: #101827; color: #f8fafc; font: inherit; }
+
+/* Główny przycisk jest mocno wyróżniony; stan disabled sygnalizuje oczekiwanie. */
+button { border: 0; border-radius: 8px; padding: 12px 16px; background: #2563eb; color: white; font-weight: 700; cursor: pointer; }
+button:disabled { opacity: .6; cursor: wait; }
+#fetch { width: 100%; margin-top: 16px; }
+
+/* Presety mogą zawijać się do kolejnego wiersza na wąskim ekranie. */
+.presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.secondary { background: #34445c; font-size: .88rem; }
+.hint { font-size: .85rem; margin-bottom: 0; }
+
+/* Status i wynik grupują metadane żądania oraz zwróconą treść. */
+.result-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.status { border-radius: 999px; padding: 4px 10px; font-size: .8rem; font-weight: 700; }
+.neutral { background: #34445c; color: #dbeafe; }
+.success { background: #14532d; color: #bbf7d0; }
+.error { background: #7f1d1d; color: #fecaca; }
+
+/* Długa odpowiedź może się zawijać i przewijać bez rozpychania strony. */
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #0c1320; padding: 16px; border-radius: 8px; min-height: 110px; max-height: 360px; overflow: auto; color: #d5e1f2; }
+
+/* Dopowiedzenie i stopka są wizualnie drugorzędne wobec głównego formularza. */
+.note p { margin-bottom: 0; color: #bac7d8; }
+footer { text-align: center; font-size: .8rem; margin: 28px 0; }

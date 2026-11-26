@@ -1,0 +1,42 @@
+services:
+  # Interfejs użytkownika oraz backend wykonujący demonstracyjne żądania HTTP.
+  web-app:
+    build:
+      context: .
+      dockerfile: ./web-app/Dockerfile
+    container_name: ssrf-web-app
+    # Publikujemy UI tylko na lokalnym interfejsie hosta, nie w całej sieci.
+    ports:
+      - "127.0.0.1:5000:5000"
+    # Backend startuje dopiero, gdy wewnętrzne API przejdzie kontrolę zdrowia.
+    depends_on:
+      internal-api:
+        condition: service_healthy
+    networks:
+      - demo-net
+    restart: unless-stopped
+
+  # Fikcyjna usługa wewnętrzna dostępna tylko z sieci kontenerów.
+  internal-api:
+    build:
+      context: .
+      dockerfile: ./internal-api/Dockerfile
+    container_name: ssrf-internal-api
+    # Celowo brak sekcji ports: serwis nie jest wystawiony na hosta.
+    # expose opisuje port dostępny dla innych kontenerów, a nie mapowanie na hosta.
+    expose:
+      - "5001"
+    networks:
+      - demo-net
+    # Compose cyklicznie sprawdza endpoint zdrowia przed uruchomieniem web-app.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+networks:
+  # Wspólna sieć zapewnia rozwiązywanie nazw usług, m.in. internal-api.
+  demo-net:
+    driver: bridge

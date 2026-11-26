@@ -1,0 +1,4 @@
+# Framework HTTP używany przez serwis web-app i internal-api.
+Flask==3.1.1
+# Klient HTTP, którym backend pobiera adres wskazany w interfejsie.
+requests==2.32.4
