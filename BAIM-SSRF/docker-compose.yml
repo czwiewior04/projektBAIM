@@ -1,10 +1,10 @@
 services:
+  # Compose generuje unikalne nazwy kontenerow z nazwy projektu i uslugi.
   # Interfejs użytkownika oraz backend wykonujący demonstracyjne żądania HTTP.
   web-app:
     build:
       context: .
       dockerfile: ./web-app/Dockerfile
-    container_name: ssrf-web-app
     # Publikujemy UI tylko na lokalnym interfejsie hosta, nie w całej sieci.
     ports:
       - "127.0.0.1:5000:5000"
@@ -14,6 +14,13 @@ services:
         condition: service_healthy
     networks:
       - demo-net
+    # Skrypt startowy otworzy przegladarke dopiero po odpowiedzi strony glownej.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
     restart: unless-stopped
 
   # Fikcyjna usługa wewnętrzna dostępna tylko z sieci kontenerów.
@@ -21,7 +28,6 @@ services:
     build:
       context: .
       dockerfile: ./internal-api/Dockerfile
-    container_name: ssrf-internal-api
     # Celowo brak sekcji ports: serwis nie jest wystawiony na hosta.
     # expose opisuje port dostępny dla innych kontenerów, a nie mapowanie na hosta.
     expose:

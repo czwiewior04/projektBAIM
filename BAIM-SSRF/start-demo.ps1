@@ -9,12 +9,16 @@ if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
 # Uzyj folderu skryptu jako katalogu projektu, bez wzgledu na biezacy folder.
 Push-Location $PSScriptRoot
 try {
-    # Zbuduj obrazy w razie potrzeby i uruchom uslugi na pierwszym planie.
-    docker compose up --build
+    # Zbuduj obrazy, uruchom uslugi w tle i poczekaj, az beda gotowe.
+    docker compose up --build --wait --wait-timeout 120
     # Sprawdz kod procesu Docker po zakonczonym poleceniu.
     if ($LASTEXITCODE -ne 0) {
         throw "docker compose failed with exit code $LASTEXITCODE."
     }
+
+    # Compose otwiera domyslna przegladarke systemu pod tym adresem.
+    Start-Process "http://localhost:5000"
+    Write-Host "Demo is ready at http://localhost:5000"
 }
 finally {
     # Przywroc poprzedni katalog takze wtedy, gdy start sie nie powiedzie.
